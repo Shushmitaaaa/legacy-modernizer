@@ -1,0 +1,74 @@
+name: legacy-modernizer
+version: "1.0.0"
+description: >
+  An OpenEnv environment where an AI agent modernizes legacy Python codebases.
+  The agent must upgrade syntax, add test coverage, and refactor god functions
+  while verifying behavior is preserved at each step.
+
+author: Shushmita & Varshini
+tags: [developer-tools, code-quality, refactoring, real-world]
+
+observation_space:
+  type: object
+  properties:
+    task_id:
+      type: string
+      description: Current task identifier
+    code:
+      type: string
+      description: The legacy Python code to modernize
+    instructions:
+      type: string
+      description: What the agent must do to the code
+    context:
+      type: object
+      description: Additional metadata (language version, test results, etc.)
+
+action_space:
+  type: object
+  properties:
+    action_type:
+      type: string
+      enum: [submit_code, run_tests, explain]
+      description: Type of action the agent takes
+    code:
+      type: string
+      description: The modernized code submitted by the agent
+    explanation:
+      type: string
+      description: Agent's explanation of changes made
+
+tasks:
+  - id: task_syntax_upgrade
+    name: Python 2 to 3 Syntax Upgrade
+    difficulty: easy
+    description: >
+      Convert legacy Python 2 code to valid Python 3 syntax.
+    max_steps: 5
+    score_range: [0.0, 1.0]
+
+  - id: task_test_coverage
+    name: Add Unit Test Coverage
+    difficulty: medium
+    description: >
+      Write unit tests for untested legacy functions.
+    max_steps: 8
+    score_range: [0.0, 1.0]
+
+  - id: task_refactor
+    name: Refactor God Function
+    difficulty: hard
+    description: >
+      Break up a large monolithic function into smaller, well-named functions.
+    max_steps: 10
+    score_range: [0.0, 1.0]
+
+api:
+  reset: POST /reset
+  step: POST /step
+  state: GET /state
+
+runtime:
+  language: python
+  version: "3.10"
+  entrypoint: app.py
