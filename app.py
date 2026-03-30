@@ -113,6 +113,46 @@ def list_tasks():
         for task_id, config in TASK_CONFIG.items()
     }
 
+@app.get("/grader")
+def grader_info():
+    return {
+        "graders": {
+            "task_syntax_upgrade": {
+                "type": "programmatic",
+                "description": "Grades Python 2 to 3 syntax conversion",
+                "score_range": [0.0, 1.0],
+                "components": ["syntax_valid", "patterns_fixed", "runs_cleanly"]
+            },
+            "task_test_coverage": {
+                "type": "programmatic", 
+                "description": "Grades unit test quality and coverage",
+                "score_range": [0.0, 1.0],
+                "components": ["test_file_valid", "test_quantity", "tests_pass", "edge_cases", "error_cases"]
+            },
+            "task_refactor": {
+                "type": "programmatic",
+                "description": "Grades god function refactoring quality",
+                "score_range": [0.0, 1.0],
+                "components": ["parses_valid", "functions_extracted", "function_length", "single_responsibility", "naming", "logic_preserved"]
+            }
+        }
+    }
+
+@app.get("/baseline")
+def baseline_info():
+    return {
+        "model": "Qwen/Qwen2.5-72B-Instruct",
+        "api_base": "https://router.huggingface.co/v1",
+        "scores": {
+            "task_syntax_upgrade": 1.000,
+            "task_test_coverage": 0.550,
+            "task_refactor": 0.775,
+            "average": 0.775
+        },
+        "inference_script": "inference.py",
+        "runtime_seconds": 107
+    }   
+
 
 if __name__ == "__main__":
     uvicorn.run("app:app", host="0.0.0.0", port=7860, reload=False)
