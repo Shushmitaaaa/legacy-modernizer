@@ -112,7 +112,8 @@ def run_task(task_id: str):
         success = False
 
     rewards_str = ",".join(f"{r:.2f}" for r in rewards)
-    print(f"[END] success={str(success).lower()} steps={step_num} rewards={rewards_str}")
+    final_score = rewards[-1] if rewards else 0.0
+    print(f"[END] success={str(success).lower()} steps={step_num} score={final_score:.2f} rewards={rewards_str}")
 
 def main():
     for task_id in TASKS:
