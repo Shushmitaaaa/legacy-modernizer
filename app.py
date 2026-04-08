@@ -145,9 +145,9 @@ def baseline_info():
         "api_base": "https://router.huggingface.co/v1",
         "scores": {
             "task_syntax_upgrade": 1.000,
-            "task_test_coverage": 0.550,
-            "task_refactor": 0.775,
-            "average": 0.775
+            "task_test_coverage": 0.600,
+            "task_refactor": 0.720,
+            "average": 0.773
         },
         "inference_script": "inference.py",
         "runtime_seconds": 107

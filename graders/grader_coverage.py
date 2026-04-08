@@ -81,6 +81,11 @@ def _run_tests(source_code: str, test_code: str) -> Tuple[float, int, int, int]:
             f.write(fixed_test)
 
         try:
+            # Ensure pytest is available
+            subprocess.run(
+                [sys.executable, "-m", "pip", "install", "pytest", "-q"],
+                capture_output=True, timeout=30
+            )
             result = subprocess.run(
                 [sys.executable, "-m", "pytest", test_path, "-v", "--tb=short", "-q",
                  "--no-header", "-p", "no:cacheprovider"],
