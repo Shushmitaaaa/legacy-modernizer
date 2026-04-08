@@ -1,0 +1,99 @@
+{
+  "results": [
+    {
+      "task_id": "task_syntax_upgrade",
+      "score": 1.0,
+      "done": true,
+      "breakdown": {
+        "parses_as_python3": true,
+        "runs_without_error": true,
+        "python2_patterns_removed": {
+          "print_statement": {
+            "passed": true,
+            "description": "print() used instead of print statement",
+            "weight": 0.1
+          },
+          "iteritems_removed": {
+            "passed": true,
+            "description": ".iteritems()/.itervalues()/.iterkeys() replaced",
+            "weight": 0.1
+          },
+          "has_key_removed": {
+            "passed": true,
+            "description": ".has_key() replaced with 'in' operator",
+            "weight": 0.08
+          },
+          "except_syntax_fixed": {
+            "passed": true,
+            "description": "except X, e syntax fixed to except X as e",
+            "weight": 0.1
+          },
+          "urllib2_removed": {
+            "passed": true,
+            "description": "urllib2 replaced with urllib.request",
+            "weight": 0.06
+          },
+          "cpickle_removed": {
+            "passed": true,
+            "description": "cPickle/cStringIO replaced with modern equivalents",
+            "weight": 0.06
+          }
+        },
+        "score_components": {
+          "syntax_valid": 0.3,
+          "patterns_fixed": 0.5,
+          "runs_cleanly": 0.2
+        }
+      },
+      "llm_time_seconds": 21.41
+    },
+    {
+      "task_id": "task_test_coverage",
+      "score": 0.55,
+      "done": true,
+      "breakdown": {
+        "test_file_valid": true,
+        "tests_found": 8,
+        "tests_passed": 0,
+        "tests_failed": 0,
+        "coverage_percent": 0.0,
+        "has_edge_cases": true,
+        "has_error_cases": true,
+        "score_components": {
+          "test_file_valid": 0.1,
+          "test_quantity": 0.2,
+          "tests_pass": 0.0,
+          "edge_cases": 0.15,
+          "error_cases": 0.09999999999999999
+        }
+      },
+      "llm_time_seconds": 25.0
+    },
+    {
+      "task_id": "task_refactor",
+      "score": 0.775,
+      "done": true,
+      "breakdown": {
+        "parses_valid": true,
+        "functions_extracted": 13,
+        "max_function_length": 35,
+        "single_responsibility": true,
+        "descriptive_names": true,
+        "original_logic_preserved": true,
+        "score_components": {
+          "parses_valid": 0.1,
+          "functions_extracted": 0.25,
+          "function_length": 0.05,
+          "single_responsibility": 0.2,
+          "naming": 0.1,
+          "logic_preserved": 0.07500000000000001
+        },
+        "avg_function_length": 7.7
+      },
+      "llm_time_seconds": 25.89
+    }
+  ],
+  "average_score": 0.775,
+  "total_time_seconds": 106.91,
+  "model": "Qwen/Qwen2.5-72B-Instruct"
+}

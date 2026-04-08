@@ -39,7 +39,6 @@ def grade_test_coverage(source_code: str, test_code: str) -> Tuple[float, Dict[s
         test_count_score = 0.10
     else:
         test_count_score = 0.05
-
     breakdown["score_components"]["test_quantity"] = test_count_score
 
     pass_score, passed, failed, errors = _run_tests(source_code, test_code)
@@ -76,24 +75,28 @@ def _run_tests(source_code: str, test_code: str) -> Tuple[float, int, int, int]:
         with open(src_path, 'w') as f:
             f.write(source_code)
 
-        fixed_test = "from source_module import *\n" + test_code
+        fixed_test = "from source_module import *\nimport sys\nsys.path.insert(0, '.')\n" + test_code
         test_path = os.path.join(tmpdir, "test_module.py")
         with open(test_path, 'w') as f:
             f.write(fixed_test)
 
         try:
             result = subprocess.run(
-                [sys.executable, "-m", "pytest", test_path, "-v", "--tb=no", "-q"],
-                capture_output=True, text=True, timeout=30, cwd=tmpdir
+                [sys.executable, "-m", "pytest", test_path, "-v", "--tb=short", "-q",
+                 "--no-header", "-p", "no:cacheprovider"],
+                capture_output=True, text=True, timeout=60, cwd=tmpdir,
+                env={**os.environ, "PYTHONPATH": tmpdir}
             )
             output = result.stdout + result.stderr
-            passed = len(re.findall(r' PASSED', output))
-            failed = len(re.findall(r' FAILED', output))
-            errors = len(re.findall(r' ERROR', output))
+            passed = len(re.findall(r'PASSED', output))
+            failed = len(re.findall(r'FAILED', output))
+            errors = len(re.findall(r'ERROR', output))
             total_tests = passed + failed + errors
             if total_tests == 0:
                 return 0.0, 0, 0, 0
             return passed / total_tests, passed, failed, errors
+        except subprocess.TimeoutExpired:
+            return 0.0, 0, 0, 1
         except Exception:
             return 0.0, 0, 0, 1
 
@@ -107,6 +110,6 @@ def _check_edge_cases(test_code: str) -> float:
 
 def _check_error_cases(test_code: str) -> float:
     error_indicators = [r'pytest\.raises', r'assertRaises', r'ValueError',
-                        r'TypeError', r'KeyError', r'Exception']
+                        r'TypeError', r'KeyError', r'ZeroDivisionError', r'Exception']
     matches = sum(1 for pattern in error_indicators if re.search(pattern, test_code))
     return min(matches / 3, 1.0)
