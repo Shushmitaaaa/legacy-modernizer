@@ -2,6 +2,10 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import uvicorn
+import sys
+import os
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from models import (
     ObservationModel,
@@ -12,7 +16,6 @@ from models import (
 )
 from environment import LegacyModernizerEnv, ALL_TASK_IDS
 
-# Global environment instance
 env = LegacyModernizerEnv()
 
 
@@ -64,10 +67,6 @@ def health():
 
 @app.post("/reset", response_model=ObservationModel)
 def reset(request: ResetRequestModel = None):
-    """
-    Reset the environment and return the initial observation.
-    Optionally specify a task_id and seed for reproducibility.
-    """
     try:
         req = request or ResetRequestModel()
         observation = env.reset(task_id=req.task_id, seed=req.seed)
@@ -80,10 +79,6 @@ def reset(request: ResetRequestModel = None):
 
 @app.post("/step", response_model=StepResultModel)
 def step(action: ActionModel):
-    """
-    Take a step in the environment with the given action.
-    Action types: submit_code, run_tests, explain
-    """
     try:
         result = env.step(action)
         return result
@@ -95,15 +90,11 @@ def step(action: ActionModel):
 
 @app.get("/state")
 def state():
-    """
-    Get the current environment state without taking a step.
-    """
     return env.state()
 
 
 @app.get("/tasks")
 def list_tasks():
-    """List all available tasks with descriptions."""
     from environment import TASK_CONFIG
     return {
         task_id: {
@@ -112,6 +103,7 @@ def list_tasks():
         }
         for task_id, config in TASK_CONFIG.items()
     }
+
 
 @app.get("/grader")
 def grader_info():
@@ -124,7 +116,7 @@ def grader_info():
                 "components": ["syntax_valid", "patterns_fixed", "runs_cleanly"]
             },
             "task_test_coverage": {
-                "type": "programmatic", 
+                "type": "programmatic",
                 "description": "Grades unit test quality and coverage",
                 "score_range": [0.0, 1.0],
                 "components": ["test_file_valid", "test_quantity", "tests_pass", "edge_cases", "error_cases"]
@@ -137,6 +129,7 @@ def grader_info():
             }
         }
     }
+
 
 @app.get("/baseline")
 def baseline_info():
@@ -151,8 +144,12 @@ def baseline_info():
         },
         "inference_script": "inference.py",
         "runtime_seconds": 107
-    }   
+    }
+
+
+def main():
+    uvicorn.run("server.app:app", host="0.0.0.0", port=7860, reload=False)
 
 
 if __name__ == "__main__":
-    uvicorn.run("app:app", host="0.0.0.0", port=7860, reload=False)
+    main()
