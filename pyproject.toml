@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "legacy-modernizer"
+version = "1.0.0"
+description = "OpenEnv environment for legacy Python codebase modernization"
+requires-python = ">=3.8"
+
+[tool.openenv]
+name = "legacy-modernizer"
+version = "1.0.0"
+tasks = ["task_syntax_upgrade", "task_test_coverage", "task_refactor"]
