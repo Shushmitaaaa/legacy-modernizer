@@ -1,20 +1,12 @@
-
-
 import os
 import re
 import time
 import requests
-from openai import OpenAI
 
 API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
 MODEL_NAME   = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
 HF_TOKEN     = os.getenv("HF_TOKEN")
 ENV_URL      = os.getenv("ENV_URL", "https://shushmitaaaaaaaaa-legacy-modernizer.hf.space")
-
-if HF_TOKEN is None:
-    raise ValueError("HF_TOKEN environment variable is required")
-
-client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
 
 TASKS = [
     "task_syntax_upgrade",
@@ -22,7 +14,13 @@ TASKS = [
     "task_refactor",
 ]
 
+def get_client():
+    from openai import OpenAI
+    token = HF_TOKEN or os.getenv("API_KEY", "")
+    return OpenAI(base_url=API_BASE_URL, api_key=token)
+
 def call_llm(system_prompt: str, user_prompt: str) -> str:
+    client = get_client()
     response = client.chat.completions.create(
         model=MODEL_NAME,
         messages=[
