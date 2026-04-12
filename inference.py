@@ -13,15 +13,14 @@ TASKS = [
 
 def get_client():
     from openai import OpenAI
-
-    base_url = os.environ["API_BASE_URL"]
-    api_key = os.environ["API_KEY"]
-
+    base_url = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
+    api_key = os.getenv("API_KEY", "")
     return OpenAI(base_url=base_url, api_key=api_key)
+
 
 def call_llm(system_prompt: str, user_prompt: str) -> str:
     client = get_client()
-    model = os.environ["MODEL_NAME"]
+    model = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
     response = client.chat.completions.create(
         model=model,
         messages=[
@@ -42,7 +41,7 @@ def extract_code_block(text: str) -> str:
 
 
 def run_task(task_id: str):
-    model = os.environ["MODEL_NAME"]
+    model = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
     env_url = os.getenv("ENV_URL", "https://shushmitaaaaaaaaa-legacy-modernizer.hf.space")
 
     print(f"[START] task={task_id} env=legacy-modernizer model={model}")
