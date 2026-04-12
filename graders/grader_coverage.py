@@ -1,3 +1,4 @@
+#grader_coverage.py
 import ast
 import subprocess
 import sys
@@ -13,6 +14,7 @@ def grade_test_coverage(source_code: str, test_code: str) -> Tuple[float, Dict[s
         "tests_found": 0,
         "tests_passed": 0,
         "tests_failed": 0,
+        "coverage_percent": 0.0,
         "has_edge_cases": False,
         "has_error_cases": False,
         "score_components": {}
@@ -70,58 +72,35 @@ def _count_test_functions(test_code: str) -> int:
 
 def _run_tests(source_code: str, test_code: str) -> Tuple[float, int, int, int]:
     with tempfile.TemporaryDirectory() as tmpdir:
-        # write source
         src_path = os.path.join(tmpdir, "source_module.py")
-        with open(src_path, 'w', encoding='utf-8') as f:
+        with open(src_path, 'w') as f:
             f.write(source_code)
 
-        # clean test code — remove any existing imports of source_module to avoid duplicates
-        clean_test = re.sub(r'^\s*(import source_module|from source_module.*)\n', 
-                           '', test_code, flags=re.MULTILINE)
-        
-        # prepend the import
-        injected = f"import sys\nsys.path.insert(0, '{tmpdir}')\nfrom source_module import *\n\n" + clean_test
-
-        test_path = os.path.join(tmpdir, "test_solution.py")
-        with open(test_path, 'w', encoding='utf-8') as f:
-            f.write(injected)
+        fixed_test = "from source_module import *\nimport sys\nsys.path.insert(0, '.')\n" + test_code
+        test_path = os.path.join(tmpdir, "test_module.py")
+        with open(test_path, 'w') as f:
+            f.write(fixed_test)
 
         try:
+            # Ensure pytest is available
+            subprocess.run(
+                [sys.executable, "-m", "pip", "install", "pytest", "-q"],
+                capture_output=True, timeout=30
+            )
             result = subprocess.run(
-                [sys.executable, "-m", "pytest", test_path,
-                 "--tb=no", "-q", "--no-header",
-                 "-p", "no:cacheprovider",
-                 "--timeout=30"],
-                capture_output=True,
-                text=True,
-                timeout=90,
-                cwd=tmpdir,
-                env={**os.environ, "PYTHONPATH": tmpdir, "PYTHONDONTWRITEBYTECODE": "1"}
+                [sys.executable, "-m", "pytest", test_path, "-v", "--tb=short", "-q",
+                 "--no-header", "-p", "no:cacheprovider"],
+                capture_output=True, text=True, timeout=60, cwd=tmpdir,
+                env={**os.environ, "PYTHONPATH": tmpdir}
             )
             output = result.stdout + result.stderr
-
-            # parse pytest summary line e.g. "3 passed, 1 failed"
-            passed = len(re.findall(r'\bPASSED\b', output))
-            failed = len(re.findall(r'\bFAILED\b', output))
-            errors = len(re.findall(r'\bERROR\b', output))
-
-            # fallback: parse summary line "X passed"
-            if passed == 0 and failed == 0 and errors == 0:
-                m = re.search(r'(\d+) passed', output)
-                if m:
-                    passed = int(m.group(1))
-                m2 = re.search(r'(\d+) failed', output)
-                if m2:
-                    failed = int(m2.group(1))
-                m3 = re.search(r'(\d+) error', output)
-                if m3:
-                    errors = int(m3.group(1))
-
+            passed = len(re.findall(r'PASSED', output))
+            failed = len(re.findall(r'FAILED', output))
+            errors = len(re.findall(r'ERROR', output))
             total_tests = passed + failed + errors
             if total_tests == 0:
                 return 0.0, 0, 0, 0
             return passed / total_tests, passed, failed, errors
-
         except subprocess.TimeoutExpired:
             return 0.0, 0, 0, 1
         except Exception:
@@ -129,20 +108,14 @@ def _run_tests(source_code: str, test_code: str) -> Tuple[float, int, int, int]:
 
 
 def _check_edge_cases(test_code: str) -> float:
-    edge_indicators = [
-        r'\b0\b', r'\[\]', r'""', r"''", r'\bNone\b',
-        r'\bempty\b', r'\bzero\b', r'\bboundary\b', r'-\d+', r'\b100\b',
-        r'\bmax\b', r'\bmin\b', r'\bnegative\b'
-    ]
+    edge_indicators = [r'\b0\b', r'\[\]', r'""', r"''", r'None',
+                       r'empty', r'zero', r'boundary', r'-\d+', r'100\b']
     matches = sum(1 for pattern in edge_indicators if re.search(pattern, test_code))
     return min(matches / 4, 1.0)
 
 
 def _check_error_cases(test_code: str) -> float:
-    error_indicators = [
-        r'pytest\.raises', r'assertRaises', r'ValueError',
-        r'TypeError', r'KeyError', r'ZeroDivisionError',
-        r'Exception', r'with pytest'
-    ]
+    error_indicators = [r'pytest\.raises', r'assertRaises', r'ValueError',
+                        r'TypeError', r'KeyError', r'ZeroDivisionError', r'Exception']
     matches = sum(1 for pattern in error_indicators if re.search(pattern, test_code))
     return min(matches / 3, 1.0)

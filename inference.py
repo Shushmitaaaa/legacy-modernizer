@@ -16,8 +16,9 @@ TASKS = [
 
 def get_client():
     from openai import OpenAI
-    token = HF_TOKEN or os.getenv("API_KEY", "")
-    return OpenAI(base_url=API_BASE_URL, api_key=token)
+    token = os.getenv("API_KEY") or os.getenv("HF_TOKEN") or ""
+    base_url = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
+    return OpenAI(base_url=base_url, api_key=token)
 
 def call_llm(system_prompt: str, user_prompt: str) -> str:
     client = get_client()
