@@ -3,10 +3,6 @@ import re
 import time
 import requests
 
-API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
-MODEL_NAME   = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
-HF_TOKEN     = os.getenv("HF_TOKEN")
-ENV_URL      = os.getenv("ENV_URL", "https://shushmitaaaaaaaaa-legacy-modernizer.hf.space")
 
 TASKS = [
     "task_syntax_upgrade",
@@ -14,24 +10,28 @@ TASKS = [
     "task_refactor",
 ]
 
+
 def get_client():
     from openai import OpenAI
-    token = os.getenv("API_KEY") or os.getenv("HF_TOKEN") or ""
+    api_key = os.getenv("API_KEY") or os.getenv("HF_TOKEN") or ""
     base_url = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
-    return OpenAI(base_url=base_url, api_key=token)
+    return OpenAI(base_url=base_url, api_key=api_key)
+
 
 def call_llm(system_prompt: str, user_prompt: str) -> str:
     client = get_client()
+    model = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
     response = client.chat.completions.create(
-        model=MODEL_NAME,
+        model=model,
         messages=[
             {"role": "system", "content": system_prompt},
-            {"role": "user",   "content": user_prompt},
+            {"role": "user", "content": user_prompt},
         ],
         temperature=0.2,
         max_tokens=3000,
     )
     return response.choices[0].message.content.strip()
+
 
 def extract_code_block(text: str) -> str:
     match = re.search(r"```(?:python)?\n(.*?)```", text, re.DOTALL)
@@ -39,8 +39,12 @@ def extract_code_block(text: str) -> str:
         return match.group(1).strip()
     return text.strip()
 
+
 def run_task(task_id: str):
-    print(f"[START] task={task_id} env=legacy-modernizer model={MODEL_NAME}")
+    model = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
+    env_url = os.getenv("ENV_URL", "https://shushmitaaaaaaaaa-legacy-modernizer.hf.space")
+
+    print(f"[START] task={task_id} env=legacy-modernizer model={model}")
 
     step_num = 0
     rewards = []
@@ -48,7 +52,7 @@ def run_task(task_id: str):
 
     try:
         reset_resp = requests.post(
-            f"{ENV_URL}/reset",
+            f"{env_url}/reset",
             json={"task_id": task_id, "seed": 42},
             timeout=30
         )
@@ -85,7 +89,7 @@ def run_task(task_id: str):
         submitted_code = extract_code_block(llm_response)
 
         step_resp = requests.post(
-            f"{ENV_URL}/step",
+            f"{env_url}/step",
             json={
                 "action_type": "submit_code",
                 "code": submitted_code,
@@ -114,10 +118,12 @@ def run_task(task_id: str):
     final_score = rewards[-1] if rewards else 0.0
     print(f"[END] success={str(success).lower()} steps={step_num} score={final_score:.2f} rewards={rewards_str}")
 
+
 def main():
     for task_id in TASKS:
         run_task(task_id)
         time.sleep(1)
+
 
 if __name__ == "__main__":
     main()
