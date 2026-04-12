@@ -1,3 +1,4 @@
+#task_coverage.py
 LEGACY_CODE_SAMPLES = [
     {
         "id": "coverage_001",
